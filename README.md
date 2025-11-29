@@ -5,13 +5,6 @@ This system fully automates idea collection, content generation, approvals, and 
 
 ---
 
-## 🏷️ Badges
-![Made with n8n](https://img.shields.io/badge/Made%20with-n8n-8A2BE2?style=for-the-badge&logo=n8n)
-![AI Powered](https://img.shields.io/badge/AI%20Powered-Google%20Gemini-blue?style=for-the-badge&logo=google)
-![Automation](https://img.shields.io/badge/Workflow-Automation-orange?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
-
----
 
 ## 🚀 Overview
 
