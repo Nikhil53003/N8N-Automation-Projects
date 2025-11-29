@@ -83,6 +83,13 @@ Aggregates all content ideas → builds a combined email → splits and logs app
 
 ## 📂 Project Structure
 
+/workflow
+   └── Social Media Content Generator With Approval.json
+/screenshots
+   ├── workflow-diagram.png
+   ├── email-preview.png
+   └── google-sheet.png
+README.md
 
 ---
 
