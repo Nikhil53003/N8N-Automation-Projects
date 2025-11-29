@@ -1,0 +1,663 @@
+{
+  "name": "Social Media Content Generator With Approval System",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "nikhil300855@gmail.com",
+        "subject": "Content Approval Request - Multiple Topics",
+        "message": "={{ $json.emailHTML }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "buttonDisapprovalStyle": "primary"
+          }
+        },
+        "options": {}
+      },
+      "id": "d5dc13b0-0005-420e-a007-dc0781bea37d",
+      "name": "Send Approval Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        128,
+        384
+      ],
+      "webhookId": "e007906f-fc3d-45d7-b934-b0d9e66f26cf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dn3mpwKFaTJZl9np",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "LinkedInPost",
+              "value": "={{ JSON.parse($('Generate Platform-Specific Content').item.json.output.replace(/```json\\n?|```/g, '')).linkedin.text }}\n",
+              "type": "string",
+              "id": "a189c784-954b-475d-9f01-c5b3f26a4e19"
+            },
+            {
+              "name": "LinkedInHashtags",
+              "value": "={{ JSON.parse($('Generate Platform-Specific Content').item.json.output.replace(/```json\\n?|```/g, '')).linkedin.hashtags.join(', ') }}\n",
+              "type": "string",
+              "id": "8af69bd3-4ce0-4f35-b878-04adcf5de9f4"
+            },
+            {
+              "name": "InstagramPost",
+              "value": "={{ JSON.parse($('Generate Platform-Specific Content').item.json.output.replace(/```json\\n?|```/g, '')).instagram.caption }}\n",
+              "type": "string",
+              "id": "0fbae99b-060d-4cb0-92ce-af95915d9a3a"
+            },
+            {
+              "name": "InstagramHashtags",
+              "value": "={{ JSON.parse($('Generate Platform-Specific Content').item.json.output.replace(/```json\\n?|```/g, '')).instagram.hashtags.join(', ') }}\n",
+              "type": "string",
+              "id": "395cb5ed-fb71-414e-988a-b29b7d6177b4"
+            },
+            {
+              "name": "Status",
+              "value": "Published",
+              "type": "string",
+              "id": "f2564e0b-6923-41d7-a4f2-60bc648be305"
+            },
+            {
+              "name": "PublishedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string",
+              "id": "d9adbefc-0776-4457-a65a-409837ac156d"
+            },
+            {
+              "name": "approveUrl",
+              "value": "={{ $('Workflow Configuration').item.json.webhookUrl }}",
+              "type": "string",
+              "id": "dcfb840e-5908-423a-a4d4-4558fc8f9281"
+            },
+            {
+              "name": "rejectUrl",
+              "value": "={{ $('Workflow Configuration').item.json.webhookUrl }}",
+              "type": "string",
+              "id": "24aa2c8e-622f-4bc3-b4ac-850f3ceb3fc3"
+            },
+            {
+              "name": "Topic Title",
+              "value": "={{ $('Workflow Configuration').item.json['Topic Title'] }}",
+              "type": "string",
+              "id": "id-9"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5fe2d983-f388-4315-88a9-2c1b8af1db5e",
+      "name": "Prepare Data for Approval",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -544,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create posts for:\nContent Topic:{{ $json['Topic Title'] }}\n\nGenerate:\n1. LinkedIn: Professional post (max 800 chars) + relevant hashtags + clear CTA.\n2. Instagram: Engaging caption (max 800 chars) + emojis + hashtags + CTA.\n\nRules:\n- All hashtags must start with \"#\".\n- Output only valid JSON (no markdown, no ```).\n\nFormat:\n{\n  \"linkedin\": {\n    \"text\": \"post content\",\n    \"hashtags\": [\"#tag1\", \"#tag2\"]\n  },\n  \"instagram\": {\n    \"caption\": \"caption content\",\n    \"hashtags\": [\"#tag1\", \"#tag2\"]\n  }\n}",
+        "options": {
+          "systemMessage": "You are a social media content expert specializing in creating engaging posts for LinkedIn and Instagram. Your task is to generate platform-specific content that resonates with the target audience and drives engagement."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        288
+      ],
+      "id": "600812dd-e219-49dc-b0f2-dabdcda84dc5",
+      "name": "Generate Platform-Specific Content"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "approvalEmail",
+              "value": "nikhil300855gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "webhookUrl",
+              "value": "https://niksin3.app.n8n.cloud/webhook/approval",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "343ffa56-3829-463a-98e4-befeb061bb09",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                0
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "5f9c7433-dbb5-47b6-83ec-c7b2e4e5096e",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1568,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "content creation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic Title": "={{ $json['Topic Title'] }}",
+            "LinkedInPost": "={{ $json.LinkedInPost }}",
+            "LinkedIn Hashtags": "={{ $json.LinkedInHashtags }}",
+            "InstagramPost": "={{ $json.InstagramPost }}",
+            "Instagram Hashtags": "={{ $json.InstagramHashtags }}",
+            "Status": "={{ $json.Status }}",
+            "row_number": 0,
+            "Date": "={{ $now.format('yyyy-MM-dd') }}\n\n"
+          },
+          "matchingColumns": [
+            "Topic Title"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Topic Title",
+              "displayName": "Topic Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Idea/Angle",
+              "displayName": "Idea/Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedInPost",
+              "displayName": "LinkedInPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn Hashtags",
+              "displayName": "LinkedIn Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "InstagramPost",
+              "displayName": "InstagramPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Instagram Hashtags",
+              "displayName": "Instagram Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Relevance Score",
+              "displayName": "Relevance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Social 1",
+              "displayName": "Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Social 2",
+              "displayName": "Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Social 3",
+              "displayName": "Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content Text to be Posted in Social 1",
+              "displayName": "Content Text to be Posted in Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content to be Posted in Social 2",
+              "displayName": "Content to be Posted in Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content to be Posted in Social 3",
+              "displayName": "Content to be Posted in Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image for Social 1",
+              "displayName": "Image for Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image for Social 2",
+              "displayName": "Image for Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image for Social 3",
+              "displayName": "Image for Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video for Social 1",
+              "displayName": "Video for Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video for Social 2",
+              "displayName": "Video for Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video for Social 3",
+              "displayName": "Video for Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "APPROVE (YES or NO)",
+              "displayName": "APPROVE (YES or NO)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "200fe5c0-bd34-440d-8c65-85bb68889baf",
+      "name": "Log to Google Sheet1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        352,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uHFZs0foh0h1gvhy",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        576
+      ],
+      "id": "be750a60-e17a-4833-9cc4-e24ca673db7a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ggomobcvvUh6yjpn",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "content creation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "ea762c2b-d749-40b1-89e1-80b60be22265",
+      "name": "Get Content Ideas from Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1344,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ZGxLgwSJ6HDZ6rM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "allContent",
+        "options": {}
+      },
+      "id": "ecf131df-72bc-4716-b29e-370df76a21a4",
+      "name": "Aggregate All Content",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst allContent = items[0].json.allContent;\n\nlet emailHTML = `\n<div style=\"font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;\">\n  <div style=\"background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n    <h1 style=\"color: #333; margin-top: 0; border-bottom: 3px solid #4CAF50; padding-bottom: 15px;\">Content Approval Request - Multiple Items</h1>\n    <p style=\"color: #666; margin-bottom: 30px;\">Please review the following ${allContent.length} content item(s) for approval.</p>\n`;\n\nallContent.forEach((contentItem, index) => {\n  const topicTitle = contentItem['Topic Title'] || 'N/A';\n  \n  emailHTML += `\n    <div style=\"margin-bottom: 40px; padding: 20px; background-color: #fafafa; border-radius: 8px; border-left: 5px solid #4CAF50;\">\n      <h2 style=\"color: #333; margin-top: 0;\">Content Item ${index + 1}</h2>\n      \n      <div style=\"background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;\">\n        <p style=\"margin: 0;\"><strong style=\"color: #555;\">Content Topic:</strong></p>\n        <p style=\"margin: 5px 0 0 0; color: #333; font-size: 16px;\">${topicTitle}</p>\n      </div>\n\n      <div style=\"margin: 30px 0; padding: 20px; background-color: #e3f2fd; border-left: 4px solid #0077B5; border-radius: 5px;\">\n        <h3 style=\"color: #0077B5; margin-top: 0; display: flex; align-items: center;\">\n          <span style=\"font-size: 24px; margin-right: 10px;\">💼</span> LinkedIn Post\n        </h3>\n        <div style=\"background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;\">\n          <p style=\"color: #333; line-height: 1.6; white-space: pre-wrap;\">${contentItem.LinkedInPost || 'N/A'}</p>\n        </div>\n        <p style=\"margin: 10px 0 0 0;\">\n          <strong style=\"color: #555;\">Hashtags:</strong> \n          <span style=\"color: #0077B5;\">${contentItem.LinkedInHashtags || 'N/A'}</span>\n        </p>\n      </div>\n\n      <div style=\"margin: 30px 0; padding: 20px; background-color: #fce4ec; border-left: 4px solid #E1306C; border-radius: 5px;\">\n        <h3 style=\"color: #E1306C; margin-top: 0; display: flex; align-items: center;\">\n          <span style=\"font-size: 24px; margin-right: 10px;\">📸</span> Instagram Post\n        </h3>\n        <div style=\"background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;\">\n          <p style=\"color: #333; line-height: 1.6; white-space: pre-wrap;\">${contentItem.InstagramPost || 'N/A'}</p>\n        </div>\n        <p style=\"margin: 10px 0 0 0;\">\n          <strong style=\"color: #555;\">Hashtags:</strong> \n          <span style=\"color: #E1306C;\">${contentItem.InstagramHashtags || 'N/A'}</span>\n        </p>\n      </div>\n    </div>\n  `;\n});\n\nemailHTML += `\n    <div style=\"text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee;\">\n      <p style=\"color: #666;\">Please review all content items above for approval.</p>\n    </div>\n  </div>\n</div>\n`;\n\nreturn [{ json: { emailHTML: emailHTML, itemCount: allContent.length, allContent: allContent } }];"
+      },
+      "id": "19e553ab-9460-48bd-b949-db875a3c7601",
+      "name": "Build Email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allContent = $input.first().json.allContent;\n\nreturn allContent.map(item => ({\n  json: item\n}));"
+      },
+      "id": "fa4925e3-539e-478d-81b5-ace721abd779",
+      "name": "Split Approval Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        192
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Prepare Data for Approval": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Platform-Specific Content": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Generate Platform-Specific Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Content Ideas from Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Platform-Specific Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content Ideas from Sheet": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All Content": {
+      "main": [
+        [
+          {
+            "node": "Build Email HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Approval Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Approval Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Approval Response": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1447a55d-593f-4ed8-856c-a98c71cb8dae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "61a578b50464be31ff9f1860d08911490a542af7b7b8bfc30339da629edd3a03"
+  },
+  "id": "PFq8TgsQdPod7gV4",
+  "tags": []
+}
