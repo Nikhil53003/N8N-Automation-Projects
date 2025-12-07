@@ -1,0 +1,617 @@
+{
+  "name": "image generation workflow ",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        32
+      ],
+      "id": "5c2617d1-20fe-44a4-9edb-0fd2a046bad8",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1WQnRjW-j-pnt9RwpjW7SnsHnnOOnpm5B08TUxdC3-uo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WQnRjW-j-pnt9RwpjW7SnsHnnOOnpm5B08TUxdC3-uo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "2cd0374e-6399-46e8-8d9f-34067c75107c",
+      "name": "Google Sheets - Read New",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        704,
+        32
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "upE75yMPrnKP9jaE",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b3aa9fad-af49-493b-a9a0-9300c308634a",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        944,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4e04fec4-441e-45f7-acea-0017a4b5c104",
+              "name": "model",
+              "type": "string",
+              "value": "flux"
+            },
+            {
+              "id": "aa80cd68-1c82-4032-b1d7-e098856eec38",
+              "name": "width",
+              "type": "string",
+              "value": "1080"
+            },
+            {
+              "id": "da6d305f-aece-49bd-ae02-52df59915c60",
+              "name": "height",
+              "type": "string",
+              "value": "1920"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "53a5a166-2e53-408c-b3cc-2e9bef4db8c7",
+      "name": "Fields - Set Values",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1168,
+        32
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nTopic:{{ $('Google Sheets - Read New').item.json['Topic Title'] }}\nIdea :{{ $('Google Sheets - Read New').item.json['Idea/Angle'] }}\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=  You are an expert corporate-tech image prompt creator.\n\nYour goal: Produce a SINGLE clean, professional LinkedIn-style image prompt with perfect readability and no spelling mistakes.\n\nRules for the image prompt:\n- Keep the prompt short, clear, and visual (20–35 words max).\n- Use a minimal, modern, futuristic corporate-tech aesthetic.\n- Describe ONE simple scene only (no clutter, no multiple objects).\n- Use abstract A.I. visuals like neural lines, glowing nodes, holographic shapes, smooth gradients.\n- NO people unless the Topic specifically requires them.\n- NO cinematic scenes, NO environments unless requested.\n- NO gibberish, NO distorted text in the image.\n\nText on Image (Only if IncludeText = \"yes\"):\n- Add a short 1–2 word title in clean uppercase.\n- MUST be perfectly readable.\n- MUST be simple (e.g., “A.I.”, “EDGE AI”, “INSIGHTS”, “WEARABLES”).\n- Placed at the bottom, centered.\n- Do not stylize or distort the text.\n\nTechnical style:\n- soft lighting, clean gradients, modern professional tone\n- smooth depth-of-field\n- crisp sharp details\n- vertical 9:16 composition\n- avoid excessive detail that can break text clarity\n\nYour output:\n- ONE single-line image prompt only.\n- No explanation, no JSON, no bullets.\n\nInputs you receive:\nTopic:{{ $json['Topic Title'] }} \nIdea: {{ $json['Idea/Angle'] }}\nPost:{{ $json.LinkedInPost }} \nIncludeText: {{ $json[\"IncludeText\"] || $json[\"Include_Image_Text\"] || \"no\" }}\n\nOutput ONLY the final image prompt.\n"
+        }
+      },
+      "id": "3ed93e21-70ca-4ea5-abab-de87d84e98dc",
+      "name": "AI Agent - Create Image From Prompt",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1360,
+        32
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {
+          "maxOutputTokens": 65536,
+          "temperature": 0.5,
+          "topK": 40,
+          "topP": 1,
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE"
+              },
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE"
+              },
+              {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE"
+              },
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE"
+              }
+            ]
+          }
+        }
+      },
+      "id": "d0624b78-15da-4ebd-9fb3-1253e950d596",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        1360,
+        256
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jQCBJsF1l5f2FwUg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://image.pollinations.ai/prompt/{{ $json.output }}",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={\n  \"width\": {{ $('Fields - Set Values').item.json.width }},\n  \"height\":{{ $('Fields - Set Values').item.json.height }},\n  \"seed\": 42,\n  \"nologo\": true\n}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0511e464-c306-433e-a6d6-ed04162189ae",
+      "name": "HTTP Request - Create Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1648,
+        32
+      ],
+      "retryOnFail": true,
+      "typeVersion": 4.2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "14OwuuBu8i5ZwBjplR7XawtUXpKuA160W",
+          "mode": "list",
+          "cachedResultName": "image generation agent ",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/14OwuuBu8i5ZwBjplR7XawtUXpKuA160W"
+        },
+        "options": {}
+      },
+      "id": "5184fd5b-df5b-479a-a79c-2e37e23dd37b",
+      "name": "Upload file to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1856,
+        32
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "aVUglBeRijQFQnl1",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "content creation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Image for Social 1": "={{ $json.webViewLink }}",
+            "Image for Social 2": "={{ $json.webViewLink }}",
+            "Image for Social 3": "={{ $json.webViewLink }}",
+            "Topic Title": "={{ $('Loop Over Items').item.json['Topic Title'] }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "Topic Title"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Topic Title",
+              "displayName": "Topic Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Idea/Angle",
+              "displayName": "Idea/Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LinkedInPost",
+              "displayName": "LinkedInPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LinkedIn Hashtags",
+              "displayName": "LinkedIn Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "InstagramPost",
+              "displayName": "InstagramPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Instagram Hashtags",
+              "displayName": "Instagram Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Relevance Score",
+              "displayName": "Relevance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Social 1",
+              "displayName": "Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Social 2",
+              "displayName": "Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Social 3",
+              "displayName": "Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content Text to be Posted in Social 1",
+              "displayName": "Content Text to be Posted in Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content to be Posted in Social 2",
+              "displayName": "Content to be Posted in Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content to be Posted in Social 3",
+              "displayName": "Content to be Posted in Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image for Social 1",
+              "displayName": "Image for Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image for Social 2",
+              "displayName": "Image for Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image for Social 3",
+              "displayName": "Image for Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video for Social 1",
+              "displayName": "Video for Social 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Video for Social 2",
+              "displayName": "Video for Social 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Video for Social 3",
+              "displayName": "Video for Social 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "APPROVE (YES or NO)",
+              "displayName": "APPROVE (YES or NO)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2080,
+        32
+      ],
+      "id": "ccd4d796-e7ce-45dd-8eb2-c23559a609e7",
+      "name": "Update Sheet - Set Done",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "upE75yMPrnKP9jaE",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read New",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read New": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Fields - Set Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fields - Set Values": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Create Image From Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Create Image From Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Create Image From Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Create Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Create Image": {
+      "main": [
+        [
+          {
+            "node": "Upload file to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file to Drive": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet - Set Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet - Set Done": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "meta": {
+    "instanceId": "75fc217443e0611d28b6d45b40f81612478cbbadd0bde2ecf1e32b0adf71fab8"
+  },
+  "tags": []
+}
