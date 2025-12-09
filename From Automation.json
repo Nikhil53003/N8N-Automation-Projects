@@ -1,0 +1,88 @@
+{
+  "name": "From Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Join Our Techbilss Solution",
+        "formDescription": "Fill out the form to join the fastest- growing community of Nocode Devs.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name ",
+              "placeholder": "Type your Full Name Here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email"
+            },
+            {
+              "fieldLabel": "WhatsApp Number",
+              "fieldType": "number",
+              "placeholder": "Add your Phone ",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "8774f004-85cd-4e0d-891a-45b173ab1ba4",
+      "name": "On form submission",
+      "webhookId": "cce1904a-be9b-4c21-a7e7-9bf6865a2d81"
+    },
+    {
+      "parameters": {
+        "toRecipients": "={{ $json.Email }}",
+        "subject": "welcome to our course",
+        "bodyContent": "thank you filling the form ",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        0
+      ],
+      "id": "3ff3897a-f692-4053-a019-f783518940a9",
+      "name": "Send a message",
+      "webhookId": "d624d797-3854-49e3-8d57-8fc6ae31de5c",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "t2OUic1X3sLhrC1X",
+          "name": "Microsoft Outlook account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "39e8d0d0-fcc9-4f93-b7dd-57250f734042",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2f113970f12efdd576f01cf6c1353fac88686b003bdb6fb950de91da130801f9"
+  },
+  "id": "mMOrsq5aA7E0oyRi",
+  "tags": []
+}
