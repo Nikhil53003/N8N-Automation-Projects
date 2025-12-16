@@ -1,5 +1,5 @@
 {
-  "name": "image generation workflow ",
+  "name": "image generation workflow",
   "nodes": [
     {
       "parameters": {
@@ -24,7 +24,7 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "https://docs.google.com/spreadsheets/d/1WQnRjW-j-pnt9RwpjW7SnsHnnOOnpm5B08TUxdC3-uo/edit?gid=0#gid=0",
+          "value": "https://docs.google.com/spreadsheets/d/1Cp5Vkp-jjtGwqlEOXBGvKfujwDXwxoc5x6Kq4ith5uY/edit?gid=0#gid=0",
           "mode": "url"
         },
         "sheetName": {
@@ -32,7 +32,7 @@
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WQnRjW-j-pnt9RwpjW7SnsHnnOOnpm5B08TUxdC3-uo/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cp5Vkp-jjtGwqlEOXBGvKfujwDXwxoc5x6Kq4ith5uY/edit#gid=0"
         },
         "options": {}
       },
@@ -119,32 +119,9 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-pro",
+        "modelName": "models/gemini-2.5-flash-image",
         "options": {
-          "maxOutputTokens": 65536,
-          "temperature": 0.5,
-          "topK": 40,
-          "topP": 1,
-          "safetySettings": {
-            "values": [
-              {
-                "category": "HARM_CATEGORY_HARASSMENT",
-                "threshold": "BLOCK_NONE"
-              },
-              {
-                "category": "HARM_CATEGORY_HATE_SPEECH",
-                "threshold": "BLOCK_NONE"
-              },
-              {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                "threshold": "BLOCK_NONE"
-              },
-              {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                "threshold": "BLOCK_NONE"
-              }
-            ]
-          }
+          "maxOutputTokens": 2048
         }
       },
       "id": "d0624b78-15da-4ebd-9fb3-1253e950d596",
@@ -157,8 +134,8 @@
       "typeVersion": 1,
       "credentials": {
         "googlePalmApi": {
-          "id": "jQCBJsF1l5f2FwUg",
-          "name": "Google Gemini(PaLM) Api account"
+          "id": "7PGIJwqSQTSpqaR5",
+          "name": "Google Gemini(PaLM) Api account 2"
         }
       }
     },
@@ -205,10 +182,8 @@
         },
         "folderId": {
           "__rl": true,
-          "value": "14OwuuBu8i5ZwBjplR7XawtUXpKuA160W",
-          "mode": "list",
-          "cachedResultName": "image generation agent ",
-          "cachedResultUrl": "https://drive.google.com/drive/folders/14OwuuBu8i5ZwBjplR7XawtUXpKuA160W"
+          "value": "https://drive.google.com/drive/folders/1F86ZwxDDOqGUV8Qjh96ju34WZQ15g79Q",
+          "mode": "url"
         },
         "options": {}
       },
@@ -222,8 +197,8 @@
       "typeVersion": 3,
       "credentials": {
         "googleDriveOAuth2Api": {
-          "id": "aVUglBeRijQFQnl1",
-          "name": "Google Drive account"
+          "id": "H06u9SclNcoTbYWJ",
+          "name": "Google Drive account 2"
         }
       }
     },
@@ -232,15 +207,15 @@
         "operation": "appendOrUpdate",
         "documentId": {
           "__rl": true,
-          "value": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit?gid=0#gid=0",
+          "value": "https://docs.google.com/spreadsheets/d/1Cp5Vkp-jjtGwqlEOXBGvKfujwDXwxoc5x6Kq4ith5uY/edit?gid=0#gid=0",
           "mode": "url"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
-          "cachedResultName": "content creation",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1W4_9qdwUkNJv_MEJ2lfnEW2xaO3Fv5wUIkt9If_KHDY/edit#gid=0"
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cp5Vkp-jjtGwqlEOXBGvKfujwDXwxoc5x6Kq4ith5uY/edit#gid=0"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -609,9 +584,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "",
+  "versionId": "7dd930a3-1f06-4fa6-bfd3-de9a0a5a4bbe",
   "meta": {
     "instanceId": "75fc217443e0611d28b6d45b40f81612478cbbadd0bde2ecf1e32b0adf71fab8"
   },
+  "id": "nOU9jPjMCDDhyGjf",
   "tags": []
 }
