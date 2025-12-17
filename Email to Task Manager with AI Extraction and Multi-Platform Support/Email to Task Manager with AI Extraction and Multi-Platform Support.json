@@ -1,0 +1,625 @@
+{
+  "name": "Email to Task Manager with AI Extraction and Multi-Platform Support",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 5,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "9365d1e2-f620-4e9d-9558-e6c00cbe232a",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1472,
+        544
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sKzn94TFB1K9Kaww",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "taskManagerPlatform",
+              "value": "NOTION",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "notionDatabaseId",
+              "value": "<__PLACEHOLDER_VALUE__Notion Database ID__>",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "clickupListId",
+              "value": "<__PLACEHOLDER_VALUE__ClickUp List ID__>",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "trelloBoardId",
+              "value": "<__PLACEHOLDER_VALUE__Trello Board ID__>",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "trelloListId",
+              "value": "<__PLACEHOLDER_VALUE__Trello List ID__>",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "googleSheetId",
+              "value": "<__PLACEHOLDER_VALUE__Google Sheet ID for logging__>",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "fc90ba94-e3f4-40c7-b94e-7d03dd38e984",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1248,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email Subject: {{ $json.subject }}\n\nEmail Body:\n{{ $json.textPlain || $json.textHtml }}\n\nEmail From: {{ $json.from }}\n\nEmail Date: {{ $json.date }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI assistant that extracts actionable tasks from emails.\n\nYour task is to:\n1. Analyze the email content carefully\n2. Identify if there are any actionable tasks, to-dos, or action items\n3. Extract task details including title, description, deadline, priority, assignee, and relevant tags\n4. If NO actionable task is found, set action to \"no_action\"\n5. If a task IS found, set action to \"create_task\"\n\nGuidelines:\n- task_title: Brief, clear title (max 100 chars)\n- task_description: Detailed description of what needs to be done\n- deadline: Extract any mentioned dates in YYYY-MM-DD format, or empty string if none\n- priority: Determine from context (low/normal/high/urgent)\n- assignee: Extract mentioned person or leave as empty string\n- tags: Extract relevant keywords or categories\n- action: \"create_task\" if task found, \"no_action\" if not\n\nReturn the structured JSON output."
+        }
+      },
+      "id": "7d6448af-16ba-4f8f-a6ff-410115b10fbc",
+      "name": "AI Task Extractor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1024,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"task_title\": \"Review Q4 budget proposal\",\n\t\"task_description\": \"Review and provide feedback on the Q4 budget proposal by end of week\",\n\t\"deadline\": \"2024-12-31\",\n\t\"priority\": \"high\",\n\t\"assignee\": \"John Doe\",\n\t\"tags\": [\"budget\", \"finance\"],\n\t\"action\": \"create_task\"\n}"
+      },
+      "id": "edaeca66-a235-4b22-9fc3-7063397ff6aa",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -896,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Data Validation & Normalization\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Check if action is no_action\n  if (data.action === 'no_action') {\n    results.push({\n      json: {\n        action: 'no_action',\n        email_subject: $('Gmail Trigger').first().json.subject,\n        email_from: $('Gmail Trigger').first().json.from,\n        email_date: $('Gmail Trigger').first().json.date\n      }\n    });\n    continue;\n  }\n  \n  // Normalize and validate task data\n  let normalizedData = {\n    action: 'create_task',\n    task_title: data.task_title || 'Untitled Task',\n    task_description: data.task_description || '',\n    deadline: '',\n    priority: data.priority || 'normal',\n    assignee: data.assignee || 'unassigned',\n    tags: Array.isArray(data.tags) ? data.tags : [],\n    email_subject: $('Gmail Trigger').first().json.subject,\n    email_from: $('Gmail Trigger').first().json.from,\n    email_date: $('Gmail Trigger').first().json.date\n  };\n  \n  // Normalize deadline to ISO format\n  if (data.deadline) {\n    try {\n      const date = new Date(data.deadline);\n      if (!isNaN(date.getTime())) {\n        normalizedData.deadline = date.toISOString().split('T')[0];\n      }\n    } catch (e) {\n      normalizedData.deadline = '';\n    }\n  }\n  \n  // Normalize priority\n  const validPriorities = ['low', 'normal', 'high', 'urgent'];\n  if (!validPriorities.includes(normalizedData.priority.toLowerCase())) {\n    normalizedData.priority = 'normal';\n  } else {\n    normalizedData.priority = normalizedData.priority.toLowerCase();\n  }\n  \n  // Auto-generate title if missing or too short\n  if (!normalizedData.task_title || normalizedData.task_title.length < 3) {\n    normalizedData.task_title = normalizedData.email_subject.substring(0, 100) || 'Task from Email';\n  }\n  \n  results.push({ json: normalizedData });\n}\n\nreturn results;"
+      },
+      "id": "4bbcf719-01a4-4055-b965-b74857cea374",
+      "name": "Data Validation & Normalization",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "create_task",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f22b9a8d-68bc-416d-909e-25f6bb789d3b",
+      "name": "Check If Task Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -448,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $('Workflow Configuration').first().json.taskManagerPlatform }}",
+              "rightValue": "NOTION",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "50f2e4d3-4500-4e6a-8060-7c0852831452",
+      "name": "Route to Task Manager",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Workflow Configuration').first().json.notionDatabaseId }}"
+        },
+        "title": "={{ $json.task_title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "=Assignee|people",
+              "type": "people",
+              "peopleValue": "={{ $json.assignee }}"
+            },
+            {
+              "key": "=Tags|multi_select",
+              "type": "multi_select",
+              "multiSelectValue": "={{ $json.tags.join(', ') }}"
+            },
+            {
+              "key": "=Deadline|date",
+              "type": "date",
+              "date": "={{ $json.deadline }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "90283666-f459-4683-9a93-7e38dd84d54b",
+      "name": "Create Notion Task",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        176
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "JzCHCVPhbfs6do9w",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "team": "<__PLACEHOLDER_VALUE__ClickUp Team ID__>",
+        "space": "<__PLACEHOLDER_VALUE__ClickUp Space ID__>",
+        "folderless": true,
+        "list": "={{ $('Workflow Configuration').first().json.clickupListId }}",
+        "name": "={{ $json.task_title }}",
+        "additionalFields": {
+          "assignees": "={{ $json.assignee }}",
+          "content": "={{ $json.task_description }}",
+          "dueDate": "={{ $json.deadline }}",
+          "priority": "={{ $json.priority }}"
+        }
+      },
+      "id": "83734278-d551-4107-af0f-1ebf546b825f",
+      "name": "Create ClickUp Task",
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        368
+      ],
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "hyaXzQkL0QxQYaxb",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "listId": "={{ $('Workflow Configuration').first().json.trelloListId }}",
+        "name": "={{ $json.task_title }}",
+        "description": "={{ $json.task_description }}",
+        "additionalFields": {
+          "due": "={{ $json.deadline }}"
+        }
+      },
+      "id": "c2ed77fe-24d6-48b8-b044-2e694fe167a2",
+      "name": "Create Trello Card",
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        0,
+        560
+      ],
+      "credentials": {
+        "trelloApi": {
+          "id": "I42toQPgj4Yni6h0",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "log_task_title",
+              "value": "={{ $json.task_title }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "log_email_sender",
+              "value": "={{ $json.email_from }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "log_deadline",
+              "value": "={{ $json.deadline }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "log_status",
+              "value": "Created",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "log_timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "421d6d98-6cc7-4b15-b3e5-7367570c75e3",
+      "name": "Prepare Log Entry - Created",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "log_task_title",
+              "value": "N/A - No task found",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "log_email_sender",
+              "value": "={{ $json.email_from }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "log_deadline",
+              "value": "N/A",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "log_status",
+              "value": "Skipped",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "log_timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b61ce66f-039f-4b71-ad7a-05b402f519d1",
+      "name": "Prepare Log Entry - Skipped",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Workflow Configuration').first().json.googleSheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Task Log"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "log_timestamp"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "2ec18c83-1cde-4aa6-b051-9019cd633972",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        544
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "upE75yMPrnKP9jaE",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        752
+      ],
+      "id": "face6c55-4abf-4d7f-bcf0-5ae456d6be8a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jQCBJsF1l5f2FwUg",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "AI Task Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Task Extractor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Task Extractor": {
+      "main": [
+        [
+          {
+            "node": "Data Validation & Normalization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Validation & Normalization": {
+      "main": [
+        [
+          {
+            "node": "Check If Task Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Task Found": {
+      "main": [
+        [
+          {
+            "node": "Route to Task Manager",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Log Entry - Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route to Task Manager": {
+      "main": [
+        [
+          {
+            "node": "Create Notion Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create ClickUp Task",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Trello Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Notion Task": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Entry - Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Task": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Entry - Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Trello Card": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Entry - Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log Entry - Created": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log Entry - Skipped": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Task Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "20f42374-1123-4c31-9963-812200835171",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "75fc217443e0611d28b6d45b40f81612478cbbadd0bde2ecf1e32b0adf71fab8"
+  },
+  "id": "l6I6FkO9Izr2f9NW",
+  "tags": []
+}
